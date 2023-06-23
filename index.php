@@ -11,7 +11,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
-    <meta http-equiv="refresh" content="7" />
+    <!-- <meta http-equiv="refresh" content="7" /> -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./www/bootstrap/css/bootstrap.css" />
@@ -87,32 +87,13 @@
  </head>
 <!-- <body style="margin:0;padding:0"> -->
 <body>
-	<div class="container-fluid text-center">
-		<div class="row">
-			<div 
-			id="cam1GridBox"
-			class="col-12 col-md-4 thirdPageHeight bg-primary overflow-hidden"
-			style="padding: 5px; --bs-bg-opacity: 0.5"
-			>
+
+
 
 <?php
 
-$filePaths = array(
-	array("/kamery/BundleGlowna/", "PTZ"),
-	array("/kamery/BUNDLE-DRZWI/", "Dome"),
-	array("/kamery/PolskaBartka/", "PTZ"), 
 
-	array("/kamery/HaniGaraz/", "PTZ"), 
-	array("/kamery/HaniDrzwi/", "PTZ"), 
-	array("/kamery/CHICAGO-DRZWI/", "Dome"),
 
-	array("/kamery/FLORYDAAUTO/", "Dome"),
-	array("/kamery/FlorydaTylnyPokoj/", "PTZ"),
-	array("/kamery/ChicagoSypialnia/", "PTZ")
-);
-foreach ($filePaths as $value) {
-    console_log($value);
-}
 
 //Chicago Sypialnia Kamera
 $ChiDrzwiCamPath = "/kamery/ChicagoSypialnia/" ;
@@ -266,50 +247,129 @@ $zzz = 0;
 // 	}
 			
 // }
-//Polska Salon Kamera
-foreach( $scanned_PLSalonCamFirstDir as $PLSalonCamFirstFolders ) {
-	if     (strpos($PLSalonCamFirstFolders, '.'     ) !== FALSE) {} 
-	elseif (strpos($PLSalonCamFirstFolders, '@eaDir') !== FALSE) {} 
-	elseif (strpos($PLSalonCamFirstFolders, 'misc'  ) !== FALSE) {} 
-	else {
-		$x++; 
-		if ($x == 1) {
-			$PLSalonCamSecondDir = $PLSalonCamDir . $PLSalonCamFirstFolders;
-			$scanned_PLSalonCamSecondDir = array_diff(scandir($PLSalonCamSecondDir), array('..', '.'));
-			arsort($scanned_PLSalonCamSecondDir);
+$filePaths = array(
+	array("/kamery/BundleGlowna/", "PTZ"),
+	array("/kamery/BUNDLE-DRZWI/", "Dome"),
+	array("/kamery/PolskaBartka/", "PTZ"), 
 
-			foreach( $scanned_PLSalonCamSecondDir as $PLSalonCamSecondFolders ) {
-				$xx++;
-				if ($xx == 1) {
-					$PLSalonCamThirdDir = $PLSalonCamSecondDir . "/" . $PLSalonCamSecondFolders;
-					$scanned_PLSalonCamThirdDir = array_diff(scandir($PLSalonCamThirdDir), array('..', '.'));
-					arsort($scanned_PLSalonCamThirdDir);
+	array("/kamery/HaniGaraz/", "PTZ"), 
+	array("/kamery/HaniDrzwi/", "PTZ"), 
+	array("/kamery/CHICAGO-DRZWI/", "Dome"),
 
-					foreach( $scanned_PLSalonCamThirdDir as $PLSalonCamPhotoFile ) {
-						$xxx++;
-						$PLSalonCamFinalDir = $PLSalonCamPath . $PLSalonCamFirstFolders . "/" . $PLSalonCamSecondFolders;
-						$totalPLSalonCamVidFiles  = count( glob(substr($PLSalonCamFinalDir, 1) . "/*.jpg") );
-						if ($totalPLSalonCamVidFiles == 1) {
-							$totalPLSalonCamVidFiles = 1;
-						} elseif ($totalPLSalonCamVidFiles > 7) {
-							$totalPLSalonCamVidFiles = 7;
-						}
-						if ($xxx > 1 && $xxx <= $totalPLSalonCamVidFiles) {
-							// echo ("<div class='bartkacamone'>");
-							// echo ("\n");
-							echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='camone$xxx' alt='camone$xxx' height='100%' width='100%' style='display: none' class='camoneClass'>");
-							// echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='camone$xxx' alt='camone$xxx' width=500>");
-							echo ("\n");
-							// echo ("</div>");
-							// echo ("\n");
+	array("/kamery/FLORYDAAUTO/", "Dome"),
+	array("/kamery/FlorydaTylnyPokoj/", "PTZ"),
+	array("/kamery/ChicagoSypialnia/", "PTZ")
+);
+$rep = 0;
+echo '<div class="container-fluid text-center">';
+foreach ($filePaths as $cameraPath) {
+	$rep++;
+	if ($rep == 1 || $rep == 4 || $rep == 7){echo '<div class="row">';}
+		echo '<div class="col-12 col-md-4 thirdPageHeight bg-danger" style="padding: 10px; --bs-bg-opacity: 0.5">';
+		if($cameraPath[1] == "PTZ") {
+			$PLSalonCamPath = $cameraPath[0] ;
+			$PLSalonCamDir = realpath('.') . $PLSalonCamPath ;
+			$scanned_PLSalonCamFirstDir = array_diff(scandir($PLSalonCamDir), array('..', '.'));
+			arsort($scanned_PLSalonCamFirstDir);
+
+			$x = 0;
+			$xx = 0;
+			$xxx = 0;
+			
+			foreach( $scanned_PLSalonCamFirstDir as $PLSalonCamFirstFolders ) {
+				if     (strpos($PLSalonCamFirstFolders, '.'     ) !== FALSE) {} 
+				elseif (strpos($PLSalonCamFirstFolders, '@eaDir') !== FALSE) {} 
+				elseif (strpos($PLSalonCamFirstFolders, 'misc'  ) !== FALSE) {} 
+				else {
+					$x++; 
+					if ($x == 1) {
+						$PLSalonCamSecondDir = $PLSalonCamDir . $PLSalonCamFirstFolders;
+						$scanned_PLSalonCamSecondDir = array_diff(scandir($PLSalonCamSecondDir), array('..', '.'));
+						arsort($scanned_PLSalonCamSecondDir);
+			
+						foreach( $scanned_PLSalonCamSecondDir as $PLSalonCamSecondFolders ) {
+							$xx++;
+							if ($xx == 1) {
+								$PLSalonCamThirdDir = $PLSalonCamSecondDir . "/" . $PLSalonCamSecondFolders;
+								$scanned_PLSalonCamThirdDir = array_diff(scandir($PLSalonCamThirdDir), array('..', '.'));
+								arsort($scanned_PLSalonCamThirdDir);
+			
+								foreach( $scanned_PLSalonCamThirdDir as $PLSalonCamPhotoFile ) {
+									$xxx++;
+									$PLSalonCamFinalDir = $PLSalonCamPath . $PLSalonCamFirstFolders . "/" . $PLSalonCamSecondFolders;
+									$totalPLSalonCamVidFiles  = count( glob(substr($PLSalonCamFinalDir, 1) . "/*.jpg") );
+									if ($totalPLSalonCamVidFiles == 1) {
+										$totalPLSalonCamVidFiles = 1;
+									} elseif ($totalPLSalonCamVidFiles > 7) {
+										$totalPLSalonCamVidFiles = 7;
+									}
+									if ($xxx > 1 && $xxx <= $totalPLSalonCamVidFiles) {
+										// echo ("<div class='bartkacamone'>");
+										// echo ("\n");
+										echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='cam$rep$xxx' alt='cam$rep$xxx' style='display: none' class='camoneClass'>");
+										// echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='camone$xxx' alt='camone$xxx' width=500>");
+										echo ("\n");
+										// echo ("</div>");
+										// echo ("\n");
+									}
+								}
+							}
 						}
 					}
 				}
 			}
+		} else {
+			echo 'Dome ';
 		}
-	}
-			
+		// echo 		$rep . ' of 9';
+		echo '</div>';
+	if ($rep == 3 || $rep == 6 || $rep == 9){echo '</div>';}
 }
+
+//Polska Salon Kamera Am working on this
+// foreach( $scanned_PLSalonCamFirstDir as $PLSalonCamFirstFolders ) {
+// 	if     (strpos($PLSalonCamFirstFolders, '.'     ) !== FALSE) {} 
+// 	elseif (strpos($PLSalonCamFirstFolders, '@eaDir') !== FALSE) {} 
+// 	elseif (strpos($PLSalonCamFirstFolders, 'misc'  ) !== FALSE) {} 
+// 	else {
+// 		$x++; 
+// 		if ($x == 1) {
+// 			$PLSalonCamSecondDir = $PLSalonCamDir . $PLSalonCamFirstFolders;
+// 			$scanned_PLSalonCamSecondDir = array_diff(scandir($PLSalonCamSecondDir), array('..', '.'));
+// 			arsort($scanned_PLSalonCamSecondDir);
+
+// 			foreach( $scanned_PLSalonCamSecondDir as $PLSalonCamSecondFolders ) {
+// 				$xx++;
+// 				if ($xx == 1) {
+// 					$PLSalonCamThirdDir = $PLSalonCamSecondDir . "/" . $PLSalonCamSecondFolders;
+// 					$scanned_PLSalonCamThirdDir = array_diff(scandir($PLSalonCamThirdDir), array('..', '.'));
+// 					arsort($scanned_PLSalonCamThirdDir);
+
+// 					foreach( $scanned_PLSalonCamThirdDir as $PLSalonCamPhotoFile ) {
+// 						$xxx++;
+// 						$PLSalonCamFinalDir = $PLSalonCamPath . $PLSalonCamFirstFolders . "/" . $PLSalonCamSecondFolders;
+// 						$totalPLSalonCamVidFiles  = count( glob(substr($PLSalonCamFinalDir, 1) . "/*.jpg") );
+// 						if ($totalPLSalonCamVidFiles == 1) {
+// 							$totalPLSalonCamVidFiles = 1;
+// 						} elseif ($totalPLSalonCamVidFiles > 7) {
+// 							$totalPLSalonCamVidFiles = 7;
+// 						}
+// 						if ($xxx > 1 && $xxx <= $totalPLSalonCamVidFiles) {
+// 							// echo ("<div class='bartkacamone'>");
+// 							// echo ("\n");
+// 							echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='camone$xxx' alt='camone$xxx' height='100%' width='100%' style='display: none' class='camoneClass'>");
+// 							// echo("<img src='$PLSalonCamPath$PLSalonCamFirstFolders/$PLSalonCamSecondFolders/$PLSalonCamPhotoFile' id='camone$xxx' alt='camone$xxx' width=500>");
+// 							echo ("\n");
+// 							// echo ("</div>");
+// 							// echo ("\n");
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+			
+// }
 // Bundle Drzwi Kamera
 // foreach( $scanned_PLSypialniaCamFirstDir as $PLSypialniaCamFirstFolders ) {
 // 	if (strpos($PLSypialniaCamFirstFolders, '.jpg'  ) !== FALSE) {
@@ -443,62 +503,6 @@ foreach( $scanned_PLSalonCamFirstDir as $PLSalonCamFirstFolders ) {
 // }
 ?>
 
-</div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-secondary"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          2 of 9
-        </div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-success"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          3 of 9
-        </div>
-      </div>
-      <div class="row">
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-danger"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          4 of 9
-        </div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-warning"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          5 of 9
-        </div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-info"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          6 of 9
-        </div>
-      </div>
-      <div class="row">
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-dark"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          7 of 9
-        </div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-primary"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          8 of 9
-        </div>
-        <div
-          class="col-12 col-md-4 thirdPageHeight bg-secondary"
-          style="padding: 10px; --bs-bg-opacity: 0.5"
-        >
-          9 of 9
-        </div>
-
-		</div>
-    </div>
 
 <script>
 
@@ -547,18 +551,7 @@ foreach( $scanned_PLSalonCamFirstDir as $PLSalonCamFirstFolders ) {
 		// 	echo("setTimeout(camonefun$i, $time);\n");
 		// }
 	?>
-let i =0
-Array.from(document.querySelectorAll(".camoneClass")).reverse().forEach(element => {
-	i++
-	setTimeout(function(){
-		element.style.display = "block";
-		if (document.getElementById(`${element.id.slice(0,-1)}${Number(element.id.slice(-1))+1}`)) {
-			document.getElementById(`${element.id.slice(0,-1)}${Number(element.id.slice(-1))+1}`).style.display = "none";
-		}
 
-
-	}, i*1000);
-});
 // for (let i = 2; i < 7; i++) {
 	
 // 	setTimeout(function(){
