@@ -1,0 +1,22 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+
+# production
+/@eaDir
+/@tmp
+/backup
+/dlna
+/ftp
+/kamery
+/lost+found
+/resilio
+/screenshots
+/sync
+/www
+/images
+/icons
+/.sync
+/bootstrap.html
+/WANtest.sh
