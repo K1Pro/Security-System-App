@@ -6,6 +6,7 @@
 # production
 /@eaDir
 /@tmp
+/archive
 /backup
 /dlna
 /ftp
@@ -20,3 +21,4 @@
 /.sync
 /bootstrap.html
 /WANtest.sh
+/controller/db.php
