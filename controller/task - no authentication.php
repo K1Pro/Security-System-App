@@ -1,84 +1,137 @@
 <?php
 
-    // require_once('db.php');
+    require_once('db.php');
     require_once('../model/Task.php');
     require_once('../model/Response.php');
 
-    function console_log($output, $with_script_tags = true) {
-        $js_code = 'console.log(' . json_encode($output, JSON_HEX_TAG) . ');';
-        if ($with_script_tags) {
-            $js_code = '<script>' . $js_code . '</script>';
-        }
-        echo $js_code;
+    try{
+        $writeDB = DB::connectWriteDB();
+        $readDB = DB::connectReadDB();
+
+    }
+    catch(PDOException $ex){
+        error_log('Connection error - '.$ex, 0);
+        $response = new Response();
+        $response->setHttpStatusCode(500);
+        $response->setSuccess(false);
+        $response->addMessage('Database connection error');
+        $response->send();
+        exit();
     }
 
-    // try{
-    //     $writeDB = DB::connectWriteDB();
-    //     $readDB = DB::connectReadDB();
+    // begin authentication script
 
-    // }
-    // catch(PDOException $ex){
-    //     error_log('Connection error - '.$ex, 0);
-    //     $response = new Response();
-    //     $response->setHttpStatusCode(500);
-    //     $response->setSuccess(false);
-    //     $response->addMessage('Database connection error');
-    //     $response->send();
-    //     exit();
-    // }
+    if(!isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) || strlen($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) < 1) {
+        $response = new Response();
+        $response->setHttpStatusCode(401);
+        $response->setSuccess(false);
+        (!isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? $response->addMessage('Access token is missing from the header') : false);
+        (strlen($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) < 1 ? $response->addMessage('Access token cannot be blank') : false);
+        $response->send();
+        exit();
+    }
 
-    if(array_key_exists('directory',$_GET)) {
-        $dir = $_GET['directory'];
+    $accesstoken = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
 
-        if ($dir == '') {
-            // $response = new Response();
-            // $response->setHttpStatusCode(400);
-            // $response->setSuccess(false);
-            // $response->addMessage("Task ID cannot be blank or must be numeric");
-            // $response->send();
+    try{
+
+        $query = $writeDB->prepare('select userid, accesstokenexpiry, useractive, loginattempts from tblsessions, tblusers where tblsessions.userid = tblusers.id and accesstoken = :accesstoken');
+        $query->bindParam(':accesstoken', $accesstoken, PDO::PARAM_STR);
+        $query->execute();
+        
+        $rowCount = $query->rowCount();
+
+        if ($rowCount === 0) {
+            $response = new Response();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage('Invalid access token');
+            $response->send();
+            exit();
+        }
+
+        $row = $query->fetch(PDO::FETCH_ASSOC);
+
+        $returned_userid = $row['userid'];
+        $returned_accesstokenexpiry = $row['accesstokenexpiry'];
+        $returned_useractive = $row['useractive'];
+        $returned_loginattempts = $row['loginattempts'];
+
+        if ($returned_useractiv !== 'Y') {
+            $response = new Response();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage('User account not active');
+            $response->send();
+            exit();
+        }
+
+        if($returned_loginattempts >= 3) {
+            $response = new Response();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage('User account is currently locked out');
+            $response->send();
+            exit();
+        }
+
+        if (strtotime($returned_accesstokenexpiry) < time()){
+            $response = new Response();
+            $response->setHttpStatusCode(401);
+            $response->setSuccess(false);
+            $response->addMessage('Access token expired');
+            $response->send();
+            exit();
+        }
+    }
+    catch(PDOException $ex) {
+        $response = new Response();
+        $response->setHttpStatusCode(500);
+        $response->setSuccess(false);
+        $response->addMessage('There was an issue authenticating - please try again');
+        $response->send();
+        exit();
+        // finished at 16:00 for 030Add Authentication video
+    }
+
+    // end authentication script
+
+    if(array_key_exists('taskid',$_GET)) {
+        $taskid = $_GET['taskid'];
+
+        if ($taskid == '' || !is_numeric($taskid)) {
+            $response = new Response();
+            $response->setHttpStatusCode(400);
+            $response->setSuccess(false);
+            $response->addMessage("Task ID cannot be blank or must be numeric");
+            $response->send();
             exit;
         }
 
         if($_SERVER['REQUEST_METHOD'] === 'GET') {
             try{
-                $dirCam   = dirname(__DIR__) . "/kamery/" . $dir;
-                $dirCamFiles = array_diff(scandir($dirCam, SCANDIR_SORT_DESCENDING), array('..', '.'));
-                $scanned_dirs = array();
-                $scanned_files = array();
-                $repDir = 0;
-                $repFile = 0;
-                foreach($dirCamFiles as $file) {
-                    if (is_dir("$dirCam/$file") && $repDir < 10) {
-                        $repDir++;
-                        array_push($scanned_dirs, $file);
-                    } elseif (!is_dir("$dirCam/$file") && $repFile < 10) {
-                        $repFile++;
-                        array_push($scanned_files, $file);
-                    }
+                $query = $readDB->prepare('select id, title, description, DATE_FORMAT(deadline, "%d/%m/%Y %H:%i") as deadline, completed from tbltasks where id = :taskid');
+                $query->bindParam(':taskid', $taskid, PDO::PARAM_INT);
+                $query->execute();
+
+                $rowCount = $query->rowCount();
+
+                if($rowCount === 0) {
+                    $response = new Response();
+                    $response->setHttpStatusCode(404);
+                    $response->setSuccess(false);
+                    $response->addMessage('Task not found');
+                    $response->send();
+                    exit;
                 }
 
-                if (!$scanned_files) {
-                    $dirDate    = dirname(__DIR__) . "/kamery/" . $dir . "/" . $scanned_dirs[0];
-                    $dirDateFiles = array_diff(scandir($dirDate, SCANDIR_SORT_DESCENDING), array('..', '.'));
-                    $dirTime    = dirname(__DIR__) . "/kamery/" . $dir . "/" . $scanned_dirs[0] . "/" . $dirDateFiles[0];
-                    $dirTimeFiles = array_diff(scandir($dirTime, SCANDIR_SORT_DESCENDING), array('..', '.'));
-
-                    $repFile = 0;
-                    foreach($dirTimeFiles as $file) {
-                        if (!is_dir("$dirTime/$file") && $repFile < 10) {
-                            $repFile++;
-                            array_push($scanned_files, $file);
-                        }
-                    }
+                while($row = $query->fetch(PDO::FETCH_ASSOC)) {
+                    $task = new Task($row['id'], $row['title'], $row['description'], $row['deadline'], $row['completed']);
+                    $taskArray[] = $task->returnTaskAsArray();
                 }
-
                 $returnData = array();
-                $returnData['number_of_directories'] = count($scanned_dirs);
-                $returnData['parent_directory'] = "$dirCam";
-                $returnData['most_recent_directory'] = $scanned_dirs[0];
-                $returnData['most_recent_file'] = $scanned_files[0];
-                $returnData['directories'] = $scanned_dirs;
-                $returnData['files'] = $scanned_files;
+                $returnData['rows_returned'] = $rowCount;
+                $returnData['tasks'] = $taskArray;
 
                 $response = new Response();
                 $response->setHttpStatusCode(200);
@@ -87,69 +140,25 @@
                 $response->setData($returnData);
                 $response->send();
                 exit;
-
             }
-            catch (Exception $ex) {
-                // error_log('Database query error - '.$ex, 0);
+            catch(TaskException $ex){
                 $response = new Response();
                 $response->setHttpStatusCode(500);
                 $response->setSuccess(false);
                 $response->addMessage($ex->getMessage());
-                // $response->addMessage('Bart Failed to get Task');
+                $response->send();
+                exit;
+            }
+            catch(PDOException $ex){
+                error_log('Database query error - '.$ex, 0);
+                $response = new Response();
+                $response->setHttpStatusCode(500);
+                $response->setSuccess(false);
+                $response->addMessage('Failed to get Task');
                 $response->send();
                 exit();
             }
-            // try{
-            //     $query = $readDB->prepare('select id, title, description, DATE_FORMAT(deadline, "%d/%m/%Y %H:%i") as deadline, completed from tbltasks where id = :taskid');
-            //     $query->bindParam(':taskid', $taskid, PDO::PARAM_INT);
-            //     $query->execute();
-
-            //     $rowCount = $query->rowCount();
-
-            //     if($rowCount === 0) {
-            //         $response = new Response();
-            //         $response->setHttpStatusCode(404);
-            //         $response->setSuccess(false);
-            //         $response->addMessage('Task not found');
-            //         $response->send();
-            //         exit;
-            //     }
-
-            //     while($row = $query->fetch(PDO::FETCH_ASSOC)) {
-            //         $task = new Task($row['id'], $row['title'], $row['description'], $row['deadline'], $row['completed']);
-            //         $taskArray[] = $task->returnTaskAsArray();
-            //     }
-            //     $returnData = array();
-            //     $returnData['rows_returned'] = $rowCount;
-            //     $returnData['tasks'] = $taskArray;
-
-            //     $response = new Response();
-            //     $response->setHttpStatusCode(200);
-            //     $response->setSuccess(true);
-            //     $response->toCache(true);
-            //     $response->setData($returnData);
-            //     $response->send();
-            //     exit;
-            // }
-            // catch(TaskException $ex){
-            //     $response = new Response();
-            //     $response->setHttpStatusCode(500);
-            //     $response->setSuccess(false);
-            //     $response->addMessage($ex->getMessage());
-            //     $response->send();
-            //     exit;
-            // }
-            // catch(PDOException $ex){
-            //     error_log('Database query error - '.$ex, 0);
-            //     $response = new Response();
-            //     $response->setHttpStatusCode(500);
-            //     $response->setSuccess(false);
-            //     $response->addMessage('Failed to get Task');
-            //     $response->send();
-            //     exit();
-            // }
-        } 
-        elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
             try{
                 $query = $writeDB->prepare('delete from tbltasks where id = :taskid');
                 $query->bindParam(':taskid', $taskid, PDO::PARAM_INT);
@@ -361,8 +370,7 @@
             $response->send();
             exit;
         }
-    } 
-    elseif (array_key_exists('completed', $_GET)){
+    } elseif (array_key_exists('completed', $_GET)){
         $completed = $_GET['completed'];
 
         if($completed !== 'Y' && $completed !== 'N'){
@@ -522,19 +530,21 @@
     } elseif (empty($_GET)) {
         if($_SERVER['REQUEST_METHOD'] === 'GET') {
             try{
-                $dirCam    = dirname(__DIR__) . "/kamery";
-                $dirCamFiles = array_diff(scandir($dirCam, SCANDIR_SORT_DESCENDING), array('..', '.'));
-                $scanned_dirs = array();
-                foreach($dirCamFiles as $file) {
-                    if (is_dir("$dirCam/$file")) {
-                        array_push($scanned_dirs, $file);
-                    }
+                $query = $readDB->prepare('select id, title, description, DATE_FORMAT(deadline, "%d/%m/%Y %H:%i") as deadline, completed from tbltasks');
+                $query->execute();
+
+                $rowCount = $query->rowCount();
+
+                $taskArray = array();
+
+                while($row = $query->fetch(PDO::FETCH_ASSOC)) {
+                    $task = new Task($row['id'], $row['title'], $row['description'], $row['deadline'], $row['completed']);
+                    $taskArray[] = $task->returnTaskAsArray();
                 }
 
                 $returnData = array();
-                $returnData['number_of_directories'] = count($scanned_dirs);
-                $returnData['parent_directory'] = $dirCam;
-                $returnData['directories'] = $scanned_dirs;
+                $returnData['rows_returned'] = $rowCount;
+                $returnData['tasks'] = $taskArray;
 
                 $response = new Response();
                 $response->setHttpStatusCode(200);
@@ -545,15 +555,23 @@
                 exit;
 
             }
-            catch (Exception $ex) {
-                // error_log('Database query error - '.$ex, 0);
+            catch(TaskException $ex){
+                
                 $response = new Response();
                 $response->setHttpStatusCode(500);
                 $response->setSuccess(false);
                 $response->addMessage($ex->getMessage());
-                // $response->addMessage('Bart Failed to get Task');
                 $response->send();
-                exit();
+                exit;
+            }
+            catch(PDOException $ex){
+                error_log('Database query error - '.$ex, 0);
+                $response = new Response();
+                $response->setHttpStatusCode(500);
+                $response->setSuccess(false);
+                $response->addMessage('Failed to get tasks');
+                $response->send();
+                exit;
             }
 
         } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
