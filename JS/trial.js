@@ -39,16 +39,11 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
         column.style.padding = "5px";
         column.innerHTML = data.data.retrieved_items[0].slice(0, 30);
         if (data.data.retrieved_items[0].includes("/")) {
-          console.log(
-            data.data.retrieved_items[0].slice(
-              data.data.retrieved_items[0].indexOf(data.data.parent_directory) -
-                1
-            )
-          );
+          column.innerHTML = `<img src="/kamery/${data.data.retrieved_items[0].slice(
+            data.data.retrieved_items[0].indexOf(data.data.parent_directory) - 1
+          )}" class="camPTZ1Class">`;
         } else {
-          console.log(
-            `/${data.data.parent_directory}/${data.data.retrieved_items[0]}`
-          );
+          column.innerHTML = `<img src="/kamery/${data.data.parent_directory}/${data.data.retrieved_items[0]}" class="camPTZ1Class">`;
         }
 
         row.appendChild(column);
