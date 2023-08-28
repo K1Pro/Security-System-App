@@ -80,13 +80,19 @@
                 // print_r($retrieved_files);
 
                 krsort($retrieved_files);
+                // array_values($retrieved_files);
                 $retrieved_files = array_slice($retrieved_files, 0, $imageAmount);
+                $output_array = [];     // This is where your output will be stored.
+                foreach ($retrieved_files as $k => $v){
+                    array_push($output_array, $v);
+                }
+
 
                 $returnData = array();
                 $returnData['todays_date'] = date("Ymd");
                 $returnData['parent_directory'] = $dir;
                 $returnData['number_of_retrieved_items'] = count($retrieved_files);
-                $returnData['retrieved_items'] = $retrieved_files;
+                $returnData['retrieved_items'] = $output_array;
 
                 $response = new Response();
                 $response->setHttpStatusCode(200);

@@ -19,15 +19,44 @@ async function getJSON(url, errorMsg = "Something went wrong") {
     // console.log(errorMsg);
   }
 }
+
+class Camera {
+  constructor(sourceName, folderName, repAmount) {
+    this.sourceName = sourceName;
+    this.folderName = folderName;
+    this.seconds = 0;
+    this.repAmount = repAmount;
+  }
+
+  changeFrame() {
+    document.getElementById(this.folderName).innerHTML = `<img src="${
+      this.sourceName[this.seconds]
+    }" class="camPTZ1Class">`;
+
+    document.getElementById(this.folderName).style.backgroundImage = `url(${
+      this.sourceName[this.seconds + 1]
+    })`;
+
+    if (this.seconds < this.repAmount - 1) {
+      this.seconds++;
+    } else {
+      this.seconds = 0;
+    }
+  }
+}
+
 let rep = 0;
 let row;
-let seconds = 0;
 
 getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
-  console.log(data);
   data.data.retrieved_items.forEach((el) => {
-    getJSON(`http://192.168.54.1:85/controller/task.php?directory=${el}`)
-      .then((data) => {
+    getJSON(`http://192.168.54.1:85/controller/task.php?directory=${el}`).then(
+      (data) => {
+        const newCamera = new Camera(
+          data.data.retrieved_items,
+          data.data.parent_directory,
+          data.data.number_of_retrieved_items
+        );
         if (rep % 3 === 0) {
           row = document.createElement("div");
           row.classList.add("row");
@@ -37,33 +66,25 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
           "class",
           "col-12 col-md-4 thirdPageHeight bg-light"
         );
-        column.id = data.data.parent_directory;
+        column.id = newCamera.folderName;
         column.style.padding = "5px";
-
-        if (data.data.retrieved_items[0].includes("/")) {
-          column.innerHTML = `<img src="/kamery${data.data.retrieved_items[0].slice(
-            data.data.retrieved_items[0].indexOf(data.data.parent_directory) - 1
-          )}" class="camPTZ1Class">`;
-        } else {
-          column.innerHTML = `<img src="/kamery/${data.data.parent_directory}/${data.data.retrieved_items[0]}" class="camPTZ1Class">`;
-        }
+        column.style.backgroundSize = "100% 100%";
+        column.style.backgroundRepeat = "no-repeat";
+        column.style.backgroundOrigin = "content-box";
+        column.style.backgroundImage = `url(${newCamera.sourceName[0]})`;
 
         row.appendChild(column);
+
         if (rep % 3 === 0) {
           document.getElementById(`app`).appendChild(row);
         }
 
         rep++;
-      })
-      .then(() => {
-        data.data.retrieved_items.forEach((el) => {
-          seconds = 0;
-          setInterval(function () {
-            console.log(`${data.data.parent_directory}`);
-            document.getElementById(el).innerHTML = seconds;
-            seconds++;
-          }, 1000);
-        });
-      });
+
+        setInterval(function () {
+          newCamera.changeFrame();
+        }, 1500);
+      }
+    );
   });
 });
