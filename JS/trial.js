@@ -21,12 +21,13 @@ async function getJSON(url, errorMsg = "Something went wrong") {
 }
 let rep = 0;
 let row;
+let seconds = 0;
 
 getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
   console.log(data);
   data.data.retrieved_items.forEach((el) => {
-    getJSON(`http://192.168.54.1:85/controller/task.php?directory=${el}`).then(
-      (data) => {
+    getJSON(`http://192.168.54.1:85/controller/task.php?directory=${el}`)
+      .then((data) => {
         if (rep % 3 === 0) {
           row = document.createElement("div");
           row.classList.add("row");
@@ -36,10 +37,11 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
           "class",
           "col-12 col-md-4 thirdPageHeight bg-light"
         );
+        column.id = data.data.parent_directory;
         column.style.padding = "5px";
-        column.innerHTML = data.data.retrieved_items[0].slice(0, 30);
+
         if (data.data.retrieved_items[0].includes("/")) {
-          column.innerHTML = `<img src="/kamery/${data.data.retrieved_items[0].slice(
+          column.innerHTML = `<img src="/kamery${data.data.retrieved_items[0].slice(
             data.data.retrieved_items[0].indexOf(data.data.parent_directory) - 1
           )}" class="camPTZ1Class">`;
         } else {
@@ -52,7 +54,16 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
         }
 
         rep++;
-      }
-    );
+      })
+      .then(() => {
+        data.data.retrieved_items.forEach((el) => {
+          seconds = 0;
+          setInterval(function () {
+            console.log(`${data.data.parent_directory}`);
+            document.getElementById(el).innerHTML = seconds;
+            seconds++;
+          }, 1000);
+        });
+      });
   });
 });

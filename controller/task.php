@@ -4,7 +4,7 @@
     // require_once('../model/Task.php');
     require_once('../model/Response.php');
     $currentFolder = "kamery";
-    $imageAmount = 20;
+    $imageAmount = 40;
 
     if(array_key_exists('directory',$_GET)) {
         $dir = $_GET['directory'];
@@ -45,7 +45,8 @@
                 $retrieved_dirs = array();
                 foreach($dirCamFiles as $file) {
                     if (is_file("$dirCam/$file")) {
-                        array_push($retrieved_files, $file);
+                        // array_push($retrieved_files, "/" . $currentFolder . "/" . $dir . "/" . $file);
+                        $retrieved_files += [$file => "/" . $currentFolder . "/" . $dir . "/" . $file];
                     } elseif (is_dir("$dirCam/$file")) {
                         array_push($retrieved_dirs, $file);
                     }
@@ -67,15 +68,18 @@
                         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirCam));
                         foreach ($iterator as $key => $child){
                             if ($child->isFile()){
-                                $name = $child->getPathname();
-                                array_push($retrieved_files, $name);
+                                $name = substr($child->getPathname(), strpos($child->getPathname(), $currentFolder) - 1);
+                                // array_push($retrieved_files, $name);
+                                $retrieved_files += [$child->getFilename() => $name];
                             }
                         }
                     }
                     $rep++;
                 } while (count($retrieved_files) < $imageAmount);
 
-                rsort($retrieved_files);
+                // print_r($retrieved_files);
+
+                krsort($retrieved_files);
                 $retrieved_files = array_slice($retrieved_files, 0, $imageAmount);
 
                 $returnData = array();
