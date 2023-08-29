@@ -4,7 +4,7 @@
     // require_once('../model/Task.php');
     require_once('../model/Response.php');
     $currentFolder = "kamery";
-    $imageAmount = 40;
+    $imageAmount = 240;
 
     if(array_key_exists('directory',$_GET)) {
         $dir = $_GET['directory'];
@@ -86,6 +86,7 @@
                 foreach ($retrieved_files as $k => $v){
                     array_push($output_array, $v);
                 }
+                sort($output_array);
 
 
                 $returnData = array();

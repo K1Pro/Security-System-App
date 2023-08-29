@@ -57,6 +57,7 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
           data.data.parent_directory,
           data.data.number_of_retrieved_items
         );
+        console.log(newCamera);
         if (rep % 3 === 0) {
           row = document.createElement("div");
           row.classList.add("row");
@@ -83,7 +84,7 @@ getJSON(`http://192.168.54.1:85/controller/task.php`).then((data) => {
 
         setInterval(function () {
           newCamera.changeFrame();
-        }, 1500);
+        }, 250);
       }
     );
   });
